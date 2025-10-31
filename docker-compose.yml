@@ -1,0 +1,38 @@
+networks:
+  notificacoesapp-network:
+    driver: bridge
+
+services:
+
+  mongodb:
+    image: mongo:7.0
+    container_name: notificacoesapp-mongodb
+    restart: always
+    networks:
+      - notificacoesapp-network
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin123
+      - MONGO_INITDB_DATABASE=notificacoesdb
+    volumes:
+      - mongodb_data:/data/db
+
+  app:
+    build:
+      context: .
+      dockerfile: NotificacoesApp.API/Dockerfile
+    container_name: notificacoesapp-api
+    networks:
+      - notificacoesapp-network
+    ports:
+      - "8082:8080"
+    depends_on:
+      - mongodb
+    environment:
+      - ConnectionStrings__NotificacoesApp=mongodb://admin:admin123@mongodb:27017/notificacoesdb?authSource=admin
+
+volumes:
+  mongodb_data:
+
