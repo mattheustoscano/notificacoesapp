@@ -1,3 +1,4 @@
+using NotificacoesApp.API.Services;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,9 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer(); //Swagger
 builder.Services.AddSwaggerGen(); //Swagger
 
+//Registrar a classe de serviço:
+builder.Services.AddSingleton<MovimentacaoService>();
+
 var app = builder.Build();
 
 app.MapOpenApi(); //Mapeamento da API
@@ -14,33 +18,28 @@ app.MapOpenApi(); //Mapeamento da API
 app.UseSwagger(); //Swagger
 app.UseSwaggerUI(); //Swagger
 
-app.MapScalarApiReference(s => s.WithTheme(ScalarTheme.Mars)); //Scalar
+app.MapScalarApiReference(s => s.WithTheme(ScalarTheme.BluePlanet)); //Scalar
 
-var summaries = new[]
+/* ENDPOINT POST */
+app.MapPost("/notificacoes/movimentacoes", async
+    (NotificacaoMovimentacaoRequest request, MovimentacaoService service) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    await service.RegistrarMovimentacao(request);
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    return Results.Ok(new { Message = "Notificação de movimentação recebida com sucesso!" });
+});
 
 app.Run();
 
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+/* RECORD (registro) para receber o POST da movimentação */
+public record NotificacaoMovimentacaoRequest(
+    string Id,    //Id da movimentação
+    string Nome, //Nome da movimentação
+    string Data, //Data da movimentação
+    decimal Valor, //Valor da movimentação
+    string CategoriaId, //Id da categoria
+    int Tipo //Tipo da movimentação
+);
 
 
 
